@@ -1,0 +1,7 @@
+{
+  "name": "searchTrack",
+  "dependencies": {},
+  "extensions": {
+    "uni-cloud-jql": {}
+  }
+}

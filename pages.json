@@ -1,0 +1,71 @@
+{
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			"fui-(.*)": "firstui-uni/firstui/fui-$1/fui-$1.vue"
+		}
+	},
+	"pages": [
+		{
+			"path": "pages/tabbar/index",
+			"style": {
+				"navigationBarTitleText": "轨迹记录"
+			}
+		},
+		{
+			"path": "pages/tabbar/trackList",
+			"style": {
+				"navigationBarTitleText": "轨迹列表"
+			}
+		}
+//	,
+//		{
+//			"path": "pages/tabbar/test",
+//			"style": {
+//				"navigationBarTitleText": "测试页"
+//			}
+//		}
+	],
+	"subPackages": [{
+		"root": "subPackages",
+		"pages": [{
+			"path": "singleRecord",
+			"style": {
+				"navigationBarTitleText": "轨迹详情"
+			}
+		}]
+	}],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uni-app",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+	},
+	"uniIdRouter": {},
+	"tabBar": {
+		"color": "#7A7E83",
+		"selectedColor": "#007AFF",
+		"borderStyle": "black",
+		"backgroundColor": "#F8F8F8",
+		"list": [
+		{
+				"pagePath": "pages/tabbar/index",
+				"iconPath": "static/logo.png",
+				"selectedIconPath": "static/logo.png",
+				"text": "轨迹记录"
+			},
+			{
+				"pagePath": "pages/tabbar/trackList",
+				"iconPath": "static/logo.png",
+				"selectedIconPath": "static/logo.png",
+				"text": "我的记录"
+			}
+//			{
+//				"pagePath": "pages/tabbar/test",
+//				"iconPath": "static/logo.png",
+//				"selectedIconPath": "static/logo.png",
+//				"text": "测试"
+//			}
+		]
+	}
+}

@@ -1,0 +1,7 @@
+{
+  "name": "uni-id-cf",
+  "dependencies": {},
+  "extensions": {
+    "uni-cloud-jql": {}
+  }
+}
