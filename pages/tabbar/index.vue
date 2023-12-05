@@ -1,7 +1,7 @@
 <template>
 	<view class="container">
 		<map class="map" :polyline="polyline" :markers="markers" :latitude="latitude" :longitude="longitude"
-			@callouttap="previewImage">
+			@callouttap="previewImage" :enable-rotate="true">
 			<cover-view slot="callout">
 				<cover-view v-for="(item,index) in markers" :key="index">
 					<cover-view class="customCallout" :marker-id="item.id">
@@ -18,6 +18,7 @@
 
 		<cover-view class="function-list">
 			<button v-if="flag" class="button" @click="handleStart">开始记录</button>
+			<button v-if="flag" class="button" @click="handleReset">重新定位</button>
 			<button v-if="!flag" class="button" @click="handleEnd">停止记录</button>
 			<button v-if="!flag" class="button" @click="handlePhoto">拍照</button>
 		</cover-view>
@@ -27,27 +28,18 @@
 </template>
 
 <script setup>
-	import {
-		reactive,
-		onMounted,
-		ref
-	} from 'vue';
+import {onMounted, ref} from 'vue';
 
-	import {
-		getLocation
-	} from "../../utils/location.js";
+import {getLocation} from "../../utils/location.js";
 
 
-	/********************************* 数据 *********************************/
-
+/********************************* 数据 *********************************/
 	// 云对象
 	const track = uniCloud.importObject("track_record")
 
 	// 当前状态
 	const flag = ref(true)
 
-	// 弹窗控制
-	const isshow = ref(true)
 
 	// 图片预览
 
@@ -95,56 +87,35 @@
 	/********************************* 方法 *********************************/
 	// 开始记录
 	const handleStart = () => {
-
-
-		// 初始化地图，定位用户当前位置
-		getLocation()
-			.then(res => {
-				position.value.longitude = res.longitude
-				position.value.latitude = res.latitude
-				// 定位地图中心点
-				longitude.value = res.longitude
-				latitude.value = res.latitude
-				// 设置起点
-				markers.value.push({
-					id,
-					longitude,
-					latitude,
-				})
-				id++
-
-			})
-			.catch(err => {
-				console.error('获取位置信息失败:', err);
-			});
 		flag.value = false;
 		// 开始定时器
-		intervalId = setInterval(updateLocation, 1000);
-		updateLocation();
-		// 设置定时器，每隔一段时间获取一次位置信息
+		intervalId = setInterval(updateLocation, 2000);
 	}
 	// 记录实时位置
 	const updateLocation = () => {
+
 		getLocation()
 			.then(res => {
-
 				position.value.latitude = parseFloat(res.latitude)
 				position.value.longitude = parseFloat(res.longitude)
+
+				// 模拟移动测试
+				// position.value.latitude = parseFloat((position.value.latitude + 0.00001).toFixed(5));
+				// position.value.longitude = parseFloat((position.value.longitude + 0.00001).toFixed(5))
 
 				polyline.value[0].points.push({
 					"latitude": position.value.latitude,
 					"longitude": position.value.longitude
 				})
 
-				position.value.latitude = parseFloat(res.latitude)
-				position.value.longitude = parseFloat(res.longitude)
-
-				// position.value.latitude = parseFloat((position.value.latitude + 0.00001).toFixed(5));
-				// position.value.longitude = parseFloat((position.value.longitude + 0.00001).toFixed(5));
 
 			})
 			.catch(err => {
 				console.error('获取位置信息失败:', err);
+				uni.showToast({
+					title: '获取位置信息失败',
+					duration: 2000
+				});
 			});
 
 	};
@@ -159,6 +130,10 @@
 
 		})
 		id++
+
+		uni.showLoading({
+			title: '正在提交记录'
+		});
 
 
 		addRecord({
@@ -175,6 +150,41 @@
 		flag.value = true;
 
 
+	}
+
+
+	// 重新定位
+	const handleReset = () => {
+
+		getLocation()
+			.then(res => {
+
+				// 定位地图中心点
+				latitude.value = parseFloat(res.latitude)
+				longitude.value = parseFloat(res.longitude)
+
+
+				polyline.value[0].points[0] = {
+					"latitude": position.value.latitude,
+					"longitude": position.value.longitude
+				}
+
+				id = 0
+				markers.value[0] = {
+					id,
+					longitude,
+					latitude,
+				}
+				id++
+
+			})
+			.catch(err => {
+				console.error('获取位置信息失败:', err);
+				uni.showToast({
+					title: '获取位置信息失败',
+					duration: 2000
+				});
+			});
 	}
 
 	// 计算拍照间隔距离
@@ -302,12 +312,12 @@
 
 	// 记录提交
 	const addRecord = async (track, marker) => {
+
 		// 把对象交给数据库
 		let trackRes = await uniCloud.callFunction({
 			name: 'addTrack',
 			data: track
 		})
-		console.log("🚀 ~ file:index method:addRecord line:214 -----result:", trackRes.result.id)
 
 		let markerRes = await uniCloud.callFunction({
 			name: 'addMarker',
@@ -317,14 +327,19 @@
 			}
 		})
 
+
+		uni.hideLoading();
 		uni.showToast({
 			title: '上传记录成功',
 			duration: 2000
 		});
 
-    uni.reLaunch({
-      url: '/pages/tabbar/index'
-    });
+		// Adding a delay of 2000 milliseconds (2 seconds) before redirecting
+		setTimeout(function() {
+			uni.reLaunch({
+				url: '/pages/tabbar/index'
+			});
+		}, 2000);
 
 
 	}
@@ -332,8 +347,38 @@
 	/********************************* 生命周期 *********************************/
 	onMounted(() => {
 
+		// wx.startLocationUpdate({
+		// 	success: (res) => {
+		// 		wx.onLocationChange((data) => {
+		// 			console.log("🚀 ~ onLocationChange-provider:", data.provider)
+		// 			console.log("🚀 ~ onLocationChange:", data.latitude, data.longitude)
+
+		// 			longitude.value = data.longitude
+		// 			latitude.value = data.latitude
+		// 			polyline.value[0].points.push({
+		// 				"latitude": data.latitude,
+		// 				"longitude": data.longitude
+		// 			})
+
+		// 			markers.value.push({
+		// 				id,
+		// 				longitude,
+		// 				latitude,
+		// 			})
+		// 			id++
+
+
+		// 		});
+
+		// 	},
+		// 	fail: (err) => {
+		// 		console.log(err);
+		// 	}
+		// })
+
+
 		clearInterval(intervalId);
-		// 初始化地图，定位用户当前位置
+		// 初始化地图， 定位用户当前位置
 		getLocation()
 			.then(res => {
 				position.value.longitude = res.longitude
@@ -346,10 +391,13 @@
 					id,
 					longitude,
 					latitude,
-
 				})
 				id++
-
+				// 放置开始路线点
+				polyline.value[0].points.push({
+					"latitude": position.value.latitude,
+					"longitude": position.value.longitude
+				})
 			})
 			.catch(err => {
 				console.error('获取位置信息失败:', err);
